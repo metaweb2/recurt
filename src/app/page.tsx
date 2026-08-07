@@ -13,35 +13,91 @@ import { getCompanySettings } from "@/lib/settings";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [session, settings, stats, featured, urgent, latest, branches_list] = await Promise.all([
-    getSession(),
-    getCompanySettings(),
-    (async () => {
+  let session = null;
+  let settings = null;
+  let stats = { candidates: 0, jobs: 0, clients: 0, placed: 0, branches: 0 };
+  let featured: any[] = [];
+  let urgent: any[] = [];
+  let latest: any[] = [];
+  let branches_list: any[] = [];
+
+  // Run critical, resilient data fetches. If DB is unreachable, fall back to safe defaults.
+  try {
+    session = await getSession();
+    settings = await getCompanySettings();
+
+    try {
       const [candidatesN] = await db.select({ c: sql<number>`count(*)` }).from(candidates);
       const [jobsN] = await db.select({ c: sql<number>`count(*)` }).from(jobs).where(eq(jobs.isActive, true));
       const [clientsN] = await db.select({ c: sql<number>`count(*)` }).from(clients);
       const [placed] = await db.select({ c: sql<number>`count(*)` }).from(placements);
       const [branchesN] = await db.select({ c: sql<number>`count(*)` }).from(branches);
-      return {
+      stats = {
         candidates: Number(candidatesN?.c ?? 0),
         jobs: Number(jobsN?.c ?? 0),
         clients: Number(clientsN?.c ?? 0),
         placed: Number(placed?.c ?? 0),
         branches: Number(branchesN?.c ?? 0),
       };
-    })(),
-    db.select().from(jobs).where(and(eq(jobs.isActive, true), eq(jobs.isFeatured, true))).limit(6),
-    db.select().from(jobs).where(and(eq(jobs.isActive, true), eq(jobs.isUrgent, true))).limit(6),
-    db.select().from(jobs).where(eq(jobs.isActive, true)).orderBy(jobs.postedAt).limit(8),
-    db.select().from(branches).limit(6),
-  ]);
+    } catch (err) {
+      // If aggregate queries fail, continue with zeroed stats.
+      // eslint-disable-next-line no-console
+      console.warn("HomePage: aggregate DB queries failed, using zeroed stats:", (err as any)?.message ?? String(err));
+    }
 
-  const industryRows = await db.select({
-    name: sql<string>`coalesce(${clients.industry}, 'Other')`,
-    count: sql<number>`count(${jobs.id})`,
-  }).from(jobs).leftJoin(clients, eq(jobs.clientId, clients.id))
-    .where(eq(jobs.isActive, true)).groupBy(clients.industry).orderBy(sql`count(${jobs.id}) desc`).limit(8);
-  const industries = industryRows.map((row) => ({ name: row.name, count: Number(row.count), icon: "▦" }));
+    try {
+      featured = await db.select().from(jobs).where(and(eq(jobs.isActive, true), eq(jobs.isFeatured, true))).limit(6);
+    } catch (err) {
+      featured = [];
+      // eslint-disable-next-line no-console
+      console.warn("HomePage: featured jobs query failed:", (err as any)?.message ?? String(err));
+    }
+
+    try {
+      urgent = await db.select().from(jobs).where(and(eq(jobs.isActive, true), eq(jobs.isUrgent, true))).limit(6);
+    } catch (err) {
+      urgent = [];
+      // eslint-disable-next-line no-console
+      console.warn("HomePage: urgent jobs query failed:", (err as any)?.message ?? String(err));
+    }
+
+    try {
+      latest = await db.select().from(jobs).where(eq(jobs.isActive, true)).orderBy(jobs.postedAt).limit(8);
+    } catch (err) {
+      latest = [];
+      // eslint-disable-next-line no-console
+      console.warn("HomePage: latest jobs query failed:", (err as any)?.message ?? String(err));
+    }
+
+    try {
+      branches_list = await db.select().from(branches).limit(6);
+    } catch (err) {
+      branches_list = [];
+      // eslint-disable-next-line no-console
+      console.warn("HomePage: branches query failed:", (err as any)?.message ?? String(err));
+    }
+  } catch (err) {
+    // Top-level DB connectivity failed. Ensure we still have settings (which has its own fallback)
+    // and minimal defaults so the page can render.
+    // eslint-disable-next-line no-console
+    console.warn("HomePage: DB access failed, rendering with safe defaults:", (err as any)?.message ?? String(err));
+    if (!settings) settings = await getCompanySettings();
+    session = await getSession();
+  }
+
+  let industries: { name: string; count: number; icon: string }[] = [];
+  try {
+    const industryRows = await db.select({
+      name: sql<string>`coalesce(${clients.industry}, 'Other')`,
+      count: sql<number>`count(${jobs.id})`,
+    }).from(jobs).leftJoin(clients, eq(jobs.clientId, clients.id))
+      .where(eq(jobs.isActive, true)).groupBy(clients.industry).orderBy(sql`count(${jobs.id}) desc`).limit(8);
+    industries = industryRows.map((row) => ({ name: row.name, count: Number(row.count), icon: "▦" }));
+  } catch (err) {
+    industries = [];
+    // eslint-disable-next-line no-console
+    console.warn("HomePage: industries query failed, using empty list:", (err as any)?.message ?? String(err));
+  }
 
   const processSteps = [
     { icon: Search, title: "Requirement", desc: "Share your requirement with us." },
