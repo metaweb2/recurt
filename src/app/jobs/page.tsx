@@ -107,7 +107,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
                         <div className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5 text-slate-400" />{job.vacancy} vacancy</div>
                       </div>
                       <div className="mt-3 flex flex-wrap gap-1.5">
-                        {(job.skills || []).slice(0, 5).map((s) => (
+                        {(job.skills || []).slice(0, 5).map((s: string) => (
                           <span key={s} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium">{s}</span>
                         ))}
                       </div>

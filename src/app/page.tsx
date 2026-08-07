@@ -251,7 +251,7 @@ export default async function HomePage() {
                     <div className="flex items-center gap-2"><Clock className="w-3.5 h-3.5 text-slate-400" />{job.experienceMin}+ yrs • {job.vacancy} vacancies</div>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-1.5">
-                    {(job.skills || []).slice(0, 3).map((s) => (
+                    {(job.skills || []).slice(0, 3).map((s: string) => (
                       <span key={s} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium">{s}</span>
                     ))}
                   </div>

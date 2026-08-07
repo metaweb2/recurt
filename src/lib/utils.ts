@@ -12,7 +12,7 @@ export const fmtINR = (n: number | string | null | undefined) => {
 };
 
 export const initials = (name: string) =>
-  name.split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase() ?? "").join("") || "?";
+  name.split(/\s+/).filter(Boolean).slice(0, 2).map((s: string) => s[0]?.toUpperCase() ?? "").join("") || "?";
 
 export const formatDate = (d: string | Date | null | undefined) => {
   if (!d) return "—";

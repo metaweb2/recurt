@@ -71,7 +71,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
               {(job.skills || []).length > 0 && (
                 <div className="mt-5">
                   <h2 className="font-bold text-slate-900 text-lg mb-2">Required skills</h2>
-                  <div className="flex flex-wrap gap-2">{(job.skills || []).map((s) => <span key={s} className="text-xs px-3 py-1 rounded-full bg-brand-50 text-brand-700 font-medium">{s}</span>)}</div>
+                  <div className="flex flex-wrap gap-2">{(job.skills || []).map((s: string) => <span key={s} className="text-xs px-3 py-1 rounded-full bg-brand-50 text-brand-700 font-medium">{s}</span>)}</div>
                 </div>
               )}
             </div>

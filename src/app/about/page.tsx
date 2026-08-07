@@ -71,7 +71,7 @@ export default async function AboutPage() {
               { icon: Handshake, title: "Executive Search", desc: "Confidential head-hunting for leadership & CXO positions." },
               { icon: Target, title: "RPO Services", desc: "Full recruitment process outsourcing with dedicated teams." },
               { icon: Zap, title: "Payroll & Compliance", desc: "End-to-end payroll, statutory compliance & workforce admin." },
-            ].map((s) => (
+            ].map((s: string) => (
               <div key={s.title} className="bg-white border border-slate-200 rounded-xl p-6 card-hover">
                 <div className="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-3"><s.icon className="w-6 h-6" /></div>
                 <h3 className="font-bold text-slate-900 text-lg">{s.title}</h3>
@@ -98,7 +98,7 @@ export default async function AboutPage() {
               { icon: Globe, title: "Global manpower pipeline", desc: "Overseas recruitment with visa, medical, ticketing tracking." },
               { icon: CheckCircle2, title: "Quality assurance", desc: "Document verification, replacement guarantee, transparent SLAs." },
               { icon: Award, title: "Industry expertise", desc: "Specialized teams for IT, manufacturing, healthcare, construction, hospitality." },
-            ].map((s) => (
+            ].map((s: string) => (
               <div key={s.title} className="flex gap-4 bg-white border border-slate-200 rounded-xl p-5">
                 <div className="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><s.icon className="w-6 h-6" /></div>
                 <div><h3 className="font-bold text-slate-900">{s.title}</h3><p className="text-sm text-slate-600 mt-1">{s.desc}</p></div>
