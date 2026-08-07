@@ -11,12 +11,22 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const params = await searchParams;
   const redirect = typeof params.redirect === "string" ? params.redirect : "";
   const error = typeof params.error === "string" ? params.error : "";
-  const [[candidateCount], [jobCount], [clientCount], [placementCount]] = await Promise.all([
-    db.select({ count: sql<number>`count(*)` }).from(candidates),
-    db.select({ count: sql<number>`count(*)` }).from(jobs).where(eq(jobs.isActive, true)),
-    db.select({ count: sql<number>`count(*)` }).from(clients).where(eq(clients.isActive, true)),
-    db.select({ count: sql<number>`count(*)` }).from(placements),
-  ]);
+  let candidateCount: { count: number } | undefined;
+  let jobCount: { count: number } | undefined;
+  let clientCount: { count: number } | undefined;
+  let placementCount: { count: number } | undefined;
+  try {
+    [[candidateCount], [jobCount], [clientCount], [placementCount]] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(candidates),
+      db.select({ count: sql<number>`count(*)` }).from(jobs).where(eq(jobs.isActive, true)),
+      db.select({ count: sql<number>`count(*)` }).from(clients).where(eq(clients.isActive, true)),
+      db.select({ count: sql<number>`count(*)` }).from(placements),
+    ]);
+  } catch (err) {
+    // DB may be unreachable; render with zeroed stats instead of crashing.
+    // eslint-disable-next-line no-console
+    console.warn("LoginPage: DB query failed, using zeroed stats:", (err as any)?.message ?? String(err));
+  }
   const stats = [
     { label: "Registered Candidates", value: Number(candidateCount?.count ?? 0).toLocaleString("en-IN") },
     { label: "Active Jobs", value: Number(jobCount?.count ?? 0).toLocaleString("en-IN") },

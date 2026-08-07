@@ -11,11 +11,18 @@ export const dynamic = "force-dynamic";
 export default async function JobsPage({ searchParams }: { searchParams: Promise<{ q?: string; location?: string; industry?: string; type?: string }> }) {
   const sp = await searchParams;
   const session = await getSession();
-  const conditions = [eq(jobs.isActive, true)];
-  if (sp.q) conditions.push(or(like(jobs.title, `%${sp.q}%`), like(jobs.description, `%${sp.q}%`))!);
-  if (sp.location) conditions.push(or(like(jobs.location, `%${sp.location}%`), like(jobs.country, `%${sp.location}%`))!);
-  if (sp.type) conditions.push(eq(jobs.jobType, sp.type));
-  const list = await db.select().from(jobs).where(and(...conditions)).orderBy(jobs.postedAt).limit(100);
+  let list: any[] = [];
+  try {
+    const conditions = [eq(jobs.isActive, true)];
+    if (sp.q) conditions.push(or(like(jobs.title, `%${sp.q}%`), like(jobs.description, `%${sp.q}%`))!);
+    if (sp.location) conditions.push(or(like(jobs.location, `%${sp.location}%`), like(jobs.country, `%${sp.location}%`))!);
+    if (sp.type) conditions.push(eq(jobs.jobType, sp.type));
+    list = await db.select().from(jobs).where(and(...conditions)).orderBy(jobs.postedAt).limit(100);
+  } catch (err) {
+    // DB may be unreachable; render the page with an empty list instead of crashing.
+    // eslint-disable-next-line no-console
+    console.warn("JobsPage: DB query failed, using empty list:", (err as any)?.message ?? String(err));
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">

@@ -6,13 +6,24 @@ import { db } from "@/db";
 import { candidates, clients, placements } from "@/db/schema";
 import { sql } from "drizzle-orm";
 
+export const dynamic = "force-dynamic";
+
 export default async function AboutPage() {
   const session = await getSession();
-  const [[candidateCount], [placementCount], [clientCount]] = await Promise.all([
-    db.select({ count: sql<number>`count(*)` }).from(candidates),
-    db.select({ count: sql<number>`count(*)` }).from(placements),
-    db.select({ count: sql<number>`count(*)` }).from(clients),
-  ]);
+  let candidateCount: { count: number } | undefined;
+  let placementCount: { count: number } | undefined;
+  let clientCount: { count: number } | undefined;
+  try {
+    [[candidateCount], [placementCount], [clientCount]] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(candidates),
+      db.select({ count: sql<number>`count(*)` }).from(placements),
+      db.select({ count: sql<number>`count(*)` }).from(clients),
+    ]);
+  } catch (err) {
+    // DB may be unreachable; render with zeroed stats instead of crashing.
+    // eslint-disable-next-line no-console
+    console.warn("AboutPage: DB query failed, using zeroed stats:", (err as any)?.message ?? String(err));
+  }
   return (
     <div className="min-h-screen bg-white">
       <PublicHeader session={session} />

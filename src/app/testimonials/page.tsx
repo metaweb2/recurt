@@ -1,6 +1,5 @@
-import { PublicHeader, PublicFooter, EmptyState } from "@/components/ui";
+import { PublicHeader, PublicFooter, EmptyState, Award } from "@/components/ui";
 import { getSession } from "@/lib/auth";
-import { Award } from "lucide-react";
 
 export default async function TestimonialsPage() {
   const session = await getSession();
