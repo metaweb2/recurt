@@ -55,7 +55,14 @@ export async function createSession(userId: string, token: string) {
   const device = hs.get("user-agent") ?? "unknown";
   const ip = hs.get("x-forwarded-for") ?? hs.get("x-real-ip") ?? "unknown";
   const expiresAt = new Date(Date.now() + ACCESS_TTL * 1000);
-  await db.insert(sessions).values({ userId, token, device, ip, expiresAt });
+  try {
+    await db.insert(sessions).values({ userId, token, device, ip, expiresAt });
+  } catch (e) {
+    // If DB is not reachable (dev fallback), ignore session persistence
+    // but allow authentication flow to continue using JWT cookie.
+    // eslint-disable-next-line no-console
+    console.warn("createSession: failed to persist session, continuing without DB:", e?.message || e);
+  }
 }
 
 export async function setSessionCookie(token: string) {

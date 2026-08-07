@@ -14,6 +14,20 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { email, password } = loginSchema.parse(body);
+    // Dev/admin fallback: if ADMIN_EMAIL and ADMIN_PASSWORD set in env, allow login without DB
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+    if (ADMIN_EMAIL && ADMIN_PASSWORD && email === ADMIN_EMAIL) {
+      if (password !== ADMIN_PASSWORD) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      const userId = process.env.ADMIN_ID ?? "00000000-0000-4000-8000-000000000000";
+      const session = { id: userId, email: ADMIN_EMAIL, fullName: process.env.ADMIN_NAME ?? "Admin", role: process.env.ADMIN_ROLE ?? "admin", branchId: null };
+      const token = await signToken(session);
+      await createSession(userId, token);
+      await setSessionCookie(token);
+      try { await logAudit({ userId, action: "login (admin-fallback)" }); } catch {};
+      return NextResponse.json({ user: session });
+    }
+
     const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
     if (!user) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     const valid = await (await import("bcryptjs")).compare(password, user.passwordHash);
