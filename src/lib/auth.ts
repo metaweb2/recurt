@@ -61,7 +61,8 @@ export async function createSession(userId: string, token: string) {
     // If DB is not reachable (dev fallback), ignore session persistence
     // but allow authentication flow to continue using JWT cookie.
     // eslint-disable-next-line no-console
-    console.warn("createSession: failed to persist session, continuing without DB:", e?.message || e);
+    const msg = (e as any)?.message ?? String(e);
+    console.warn("createSession: failed to persist session, continuing without DB:", msg);
   }
 }
 
